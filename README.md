@@ -1,10 +1,10 @@
-# Simple image annotation
+# Simple image annotation
 
 ## Installation
 This uses pandas, and pillow as modules
 It allso uses tkinter. To make this work on mac, I had to use `brew install python-tk@3.11`. 
 
-## Flow
+## Flow
 - Point to directory of format:
 ```
 camera/ P001/   img1<timestamp>.JPG
@@ -38,7 +38,7 @@ camera/ P001/   img1<timestamp>.JPG
     - Allow multiple annotations,
     - Allow uncertainty.
 
-## Commands
+## Commands
 - next/previous annotation
 - add/remove annotation from image
 - manually save annotation
@@ -46,7 +46,7 @@ camera/ P001/   img1<timestamp>.JPG
 - add/edit comments
 - undo?
 
-## Data representation
+## Data representation
 Under the hood, we will have a pandas dataframe that looks like
 ```
 time            | id    | path  | comments  | label0        | label1        | ...   | label N       |

@@ -10,7 +10,10 @@ from cameragui.constants import *
 
 class Model:
     """
-    Is updated by the contoller and updates the view.
+    The model is centered around a pandas dataframe, the `annotation_df` that stores the annotations.
+    It contains methods that update and load data from this dataframe.
+    It is updated by the contoller (which receives inputs from the user) and it is responsible 
+    for handling representations of the data in the view which are not interacted with by the user.
     """
     def __init__(
             self, 
