@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "cameragui"
+version = "0.1.0"
+description = ""
+authors = ["Abram Schonfeldt <abram.schonfeldt@gmail.com>"]
+readme = "README.md"
+packages = [{include = "cameragui", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^1.5.3"
+pillow = "^9.4.0"
+
+[tool.poetry.scripts]
+run = 'cameragui.main:main'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
