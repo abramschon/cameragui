@@ -76,6 +76,7 @@ class Model:
         for widget in self.view.image_frame.winfo_children():
             widget.destroy()
 
+
         self.images_on_screen = [] # need pointers to current images on display, otherwise they get garbage collected
         # add self.n_display_images frames to the view.image_frame
         for i in range(self.n_display_images):
@@ -109,16 +110,50 @@ class Model:
 
 
     def add_annotation(self, label, confidence):
+        if label not in self.labels:
+            return False
+        try:
+            confidence = float(confidence)
+            if confidence < 0 or confidence > 1:
+                return False
+        except ValueError:
+            return False
         self.annotation_df.loc[self.row, label] = confidence
         return True # now controller must update view with label buttons
+    
+    def remove_annotation(self, label):
+        if label not in self.labels:
+            return False
+        self.annotation_df.loc[self.row, label] = 0
+        return True
 
-    def next_image(self):
+    def get_nonzero_annotations(self):
+        """
+        Returns a list of labels that have been annotated
+        """
+        row_label_data = self.annotation_df.loc[self.row, self.labels]
+        non_zero = row_label_data[row_label_data > 1e-5]
+        confidences = non_zero.values.tolist()
+        labels = non_zero.index.tolist()
+        return labels, confidences
+
+    def next_row(self):
+        """
+        Move to next row to annotate
+        Importanly, check that we have not reached the end of the dataframe, and also
+        check that all images belong to the same participant.
+        """
+        
+        # TODO also need to jump between participants
+
         self.row += 1
         # update View to display next set of images
         return True
 
     def save_annotations(self):
         save_annot_table(self.annotation_df)
+
+    # TODO, understand under which circumstances reloading is needed
 
     def resize_image(self, image, min_size = (400,300)):
         """
@@ -134,3 +169,11 @@ class Model:
         image = image.resize((int(image.width * resize_ratio), int(image.height * resize_ratio)), Image.ANTIALIAS)
 
         return image
+    
+    # ================= Comment getters and setters
+    def get_comment(self):
+        return self.annotation_df.loc[self.row, "comment"]
+    
+    def set_comment(self, comment):
+        self.annotation_df.loc[self.row, "comment"] = comment
+        return True

@@ -29,6 +29,7 @@ def main():
 
     # GUI setup
     root = Tk()
+    root.title("Camera logger annotation tool")
     view = View(root)
     model = Model(
         img_path_format, 
@@ -39,6 +40,7 @@ def main():
         view,
         n_processes,
     )
+    controller = Controller(model, view)
 
     # lastly, start the GUI
     root.mainloop()
