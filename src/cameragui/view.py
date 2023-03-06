@@ -8,6 +8,7 @@ class View:
     Basic layout of the GUI.
     """
     def __init__(self, root):
+        self.root = root
          
         # content is a 2 row by 2 column grid
         content = ttk.Frame(root) # create a frame to hold the content
@@ -39,11 +40,18 @@ class View:
         self.input_frame = ttk.Frame(content, padding=FRAME_PAD)
         self.input_frame.grid(column=1, row=1)
 
+        # ===== Image navigation
+        # add frame at top to navigate between images
+        self.image_nav_frame = ttk.Frame(self.input_frame, padding=SUBFRAME_PAD)
+        self.image_nav_frame.grid(column=0, row=0)
+        # add placeholder text saying Loading controls... which will be replaced by buttons
+        ttk.Label(self.image_nav_frame, text="Loading controls...").grid(column=0, row=0, sticky="we")
+
 
         # ===== Current annotations
         # add frame at top to display current annotations
         self.current_annot_frame = ttk.Frame(self.input_frame, padding=SUBFRAME_PAD)
-        self.current_annot_frame.grid(column=0, row=0)
+        self.current_annot_frame.grid(column=0, row=1)
 
         ttk.Label(self.current_annot_frame, text="No annotations").grid(column=0, row=0)
 
@@ -52,7 +60,7 @@ class View:
         # ===== Annotation input
         # add frame in middle where annnotations can be added
         self.annot_input_frame = ttk.Frame(self.input_frame, padding=SUBFRAME_PAD)
-        self.annot_input_frame.grid(column=0, row=1)
+        self.annot_input_frame.grid(column=0, row=2)
 
         ttk.Label(self.annot_input_frame, text="Loading controls...").grid(column=0, row=0)
 
@@ -62,7 +70,7 @@ class View:
         # ===== Comments input
         # add frame at bottow where comments can be added
         self.comment_frame = ttk.Frame(self.input_frame, padding=SUBFRAME_PAD)
-        self.comment_frame.grid(column=0, row=2)
+        self.comment_frame.grid(column=0, row=3)
 
         # -> controller will populate annotation_input_frame with widgets
 

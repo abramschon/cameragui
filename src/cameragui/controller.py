@@ -11,6 +11,7 @@ class Controller:
         self.view = view
 
         # get frames from view that have to be updated 
+        self.image_nav_frame = self.view.image_nav_frame # point to view's image navigation frame
         self.current_annot_frame = self.view.current_annot_frame # point to view's current annotation frame
         self.annot_input_frame = self.view.annot_input_frame # point to view's annotation input frame
         self.comment_frame = self.view.comment_frame # point to view's comment frame
@@ -20,6 +21,65 @@ class Controller:
 
         # set up view.comment_frame
         self.init_comment_frame()
+
+        # set up view.image_nav_frame
+        self.init_image_nav_frame()
+    
+    # =================== Image navigation ====================
+    def init_image_nav_frame(self):
+        """
+        Initialises the area where a user can navigate between images.
+        This area has a previous button to the left and a next button to the right.
+        """
+        # clear the frame (gets rid of loading text)
+        for widget in self.image_nav_frame.winfo_children():
+            widget.destroy()
+
+        # Add a button to the left saying "Previous"
+        self.prev_button = ttk.Button(self.image_nav_frame, text="Previous", command=self.prev_image)
+        self.prev_button.grid(column=0, row=0, sticky="w")
+        # TODO disable button if there is no previous image - do same for next button
+
+        # Add a button to the right saying "Next"
+        self.next_button = ttk.Button(self.image_nav_frame, text="Next", command=self.next_image)
+        self.next_button.grid(column=1, row=0, sticky="e")
+    
+    def next_image(self):
+        """
+        Called when the user clicks the next button. 
+        Firstly, this should initiate a call to the model to save the annotation table to the save path, with the `model.save_annotations` function.
+        The, this should make a call to the model to move to the next row of the dataframe (associated with a batch of images). 
+        If it is possible to move to the next row of the dataframe, then the model will update the images with `model.display_images` function,
+        and the controller will update the current annotation frame with `update_current_annot_frame` function.
+        """
+        self.model.save_annotations()
+        if self.model.next_row():
+            if not self._image_changed():
+                print("Error changing the image")
+                return False
+        return True
+
+    def prev_image(self):
+        """
+        Called when the user clicks the previous button.
+        """
+        self.model.save_annotations()
+        if self.model.prev_row():
+            if not self._image_changed():
+                print("Error changing the image")
+                return False
+        return True
+
+    def _image_changed(self):
+        """
+        Function that is called when the image changes.
+        - Model updates the images with `model.display_images` function,
+        - Controller updates the current annotation frame display with `update_current_annot_frame` function.
+        """
+        success = self.model.display_images()
+        success = self.update_current_annot_frame() or success
+        return success
+        
 
     # =================== Annotation input ===================
     def init_annot_input_frame(self):

@@ -36,7 +36,7 @@ class Model:
         self.view = view
         self.row = image_index
         
-        # =============== Initialise pandas dataframe
+        # =============== Initialise pandas dataframe: "annotation_df"
         # load images
         img_df = process_imgs(img_path_format, n_processes=n_processes)
         # load schema
@@ -45,7 +45,7 @@ class Model:
         annotation_df = create_annot_table(img_df, self.labels)
         # sort annotation df by ID, then time
         annotation_df = annotation_df.sort_values(by=["id", "time"])
-        self.annotation_df =  annotation_df.reset_index(drop=True)
+        self.annotation_df =  annotation_df.reset_index(drop=True) # reset index to be 0, 1, 2, ...
 
         # =============== Initialise view
         self.init_schema_frame() # populates the schema frame with labels
@@ -66,6 +66,56 @@ class Model:
         # add scrollbar if length of annotations exceeds the height of the screen
         # TODO
     
+    # =============== Changing rows
+
+    def next_row(self):
+        """
+        Move to next row to annotate.
+        Checks that we do not go beyond end of the dataframe, 
+        and that all images belong to the same participant.
+        """
+        # Check that we are not at the end of the dataframe
+        if self.row == len(self.annotation_df) - self.images_to_right - 1:
+            return False
+
+        for next_row in range(self.row+1, len(self.annotation_df) - self.images_to_right):
+            if self._check_row_ids(next_row):
+                self.row = next_row
+                # update View to display next set of images
+                return True
+        
+        return False
+
+
+    def prev_row(self):
+        """
+        Move to previous row to annotate.
+        Checks that we do not go beyond beginning of the dataframe, 
+        and that all images belong to the same participant.
+        """
+        # Check that we are not at the beginning of the dataframe
+        if self.row == self.image_index:
+            return False
+
+        for prev_row in range(self.row-1, self.image_index - 1, -1):
+            if self._check_row_ids(prev_row):
+                self.row = prev_row
+                # update View to display next set of images
+                return True
+        
+        return False
+    
+    def _check_row_ids(self, row):
+        """
+        Checks that the IDs in range [row - self.image_index, row + self.images_to_right] are the same.
+        """
+        if not self.annotation_df.loc[row - self.image_index:row + self.images_to_right, "id"].nunique() == 1:
+            return False
+
+        return True
+
+    # =============== Displaying images
+
     def display_images(self):
         """
         Displays the images in the image frame of the view.
@@ -110,7 +160,27 @@ class Model:
 
 
         return True
+    
 
+    def resize_image(self, image):
+        """
+        Resize image so that n_display images fit side by side in the image_frame.
+        Maintain aspect ratio of the images.
+        """
+        # get ideal width and height of image frame
+        # ideal the image frame should occupy 3/4 of the width of the screen and 3/5 of the height of the screen
+        # get size of current display from self.view.root.winfo_width() and self.view.root.winfo_height()
+        ideal_image_frame_width = self.view.root.winfo_screenwidth() * 3 // 4
+        ideal_image_frame_height = self.view.root.winfo_screenheight() * 3 // 5
+        max_width = ideal_image_frame_width // self.n_display_images
+        max_height = ideal_image_frame_height
+        # calculate size of each image
+        resize_ratio = min(max_width / image.width, max_height / image.height)
+        image = image.resize((int(image.width * resize_ratio), int(image.height * resize_ratio)), Image.ANTIALIAS)
+
+        return image
+
+    # ============== Adding and removing annotations
 
     def add_annotation(self, label, confidence):
         if label not in self.labels:
@@ -140,43 +210,17 @@ class Model:
         labels = non_zero.index.tolist()
         return labels, confidences
 
-    def next_row(self):
-        """
-        Move to next row to annotate
-        Importanly, check that we have not reached the end of the dataframe, and also
-        check that all images belong to the same participant.
-        """
-        
-        # TODO also need to jump between participants
 
-        self.row += 1
-        # update View to display next set of images
-        return True
-
-    def save_annotations(self):
-        save_annot_table(self.annotation_df)
+    def save_annotations(self) -> bool:
+        return save_annot_table(self.annotation_df, self.save_path)
 
     # TODO, understand under which circumstances reloading is needed
 
-    def resize_image(self, image, min_size = (400,300)):
-        """
-        Resize image so that n_display images fit side by side in the image_frame.
-        Maintain aspect ratio of the images.
-        """
-        # get width and height of image frame
-        image_frame = self.view.image_frame
-        max_width = max(image_frame.winfo_width() // self.n_display_images, min_size[0])
-        max_height = max(image_frame.winfo_height(), min_size[1])
-        # calculate size of each image
-        resize_ratio = min(max_width / image.width, max_height / image.height)
-        image = image.resize((int(image.width * resize_ratio), int(image.height * resize_ratio)), Image.ANTIALIAS)
-
-        return image
     
     # ================= Comment getters and setters
-    def get_comment(self):
+    def get_comment(self) -> str:
         return self.annotation_df.loc[self.row, "comment"]
     
-    def set_comment(self, comment):
+    def set_comment(self, comment: str) -> bool:
         self.annotation_df.loc[self.row, "comment"] = comment
         return True

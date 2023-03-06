@@ -10,7 +10,7 @@ def create_annot_table(img_df: pd.DataFrame, labels: list[str]):
     where time id and path is taken from img_df and label0 to labelN are taken from labels.
     """
     annot_df = img_df.copy()
-    annot_df["comments"] = ""
+    annot_df["comment"] = ""
     for label in labels:
         annot_df[label] = 0.0
     return annot_df
@@ -20,6 +20,7 @@ def save_annot_table(annot_df: pd.DataFrame, filepath: str):
     Saves the annotation table as a csv file.
     """
     annot_df.to_csv(filepath, index=False)
+    return True
 
 def load_annot_table(filepath: str) -> pd.DataFrame:
     """
