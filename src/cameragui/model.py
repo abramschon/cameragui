@@ -1,56 +1,59 @@
 from tkinter import *
 from tkinter import ttk
+
 from PIL import Image, ImageTk
 
-from cameragui.view import View
-from cameragui.annotation import create_annot_table, save_annot_table, load_annot_table
-from cameragui.schema import parse_schema
-from cameragui.image import process_imgs
+from cameragui.annotation import create_annot_table, load_annot_table, save_annot_table
 from cameragui.constants import *
+from cameragui.image import process_imgs
+from cameragui.schema import parse_schema
+from cameragui.view import View
+
 
 class Model:
     """
     The model is centered around a pandas dataframe, the `annotation_df` that stores the annotations.
     It contains methods that update and load data from this dataframe.
-    It is updated by the contoller (which receives inputs from the user) and it is responsible 
+    It is updated by the contoller (which receives inputs from the user) and it is responsible
     for handling representations of the data in the view which are not interacted with by the user.
     """
+
     def __init__(
-            self, 
-            img_path_format: str, 
-            n_display_images: int,
-            image_index: int, # of the n displayed images, which image to annotate
-            schema_path: str, 
-            save_path: str, 
-            view: View,
-            n_processes: int = 4,
-            rotate_image: int = -90,
-        ):
-        
+        self,
+        img_path_format: str,
+        n_display_images: int,
+        image_index: int,  # of the n displayed images, which image to annotate
+        schema_path: str,
+        save_path: str,
+        view: View,
+        n_processes: int = 4,
+        rotate_image: int = -90,
+    ):
         # Class attributes
         self.n_display_images = n_display_images
-        self.image_index = image_index # also how many images to display to the left of the current image
+        self.image_index = image_index  # also how many images to display to the left of the current image
         self.images_to_right = n_display_images - image_index - 1
         self.rotate_image = rotate_image
         self.save_path = save_path
         self.view = view
         self.row = image_index
-        
-        # =============== Initialise pandas dataframe: "annotation_df"
+
+        # =============== Initialise pandas dataframe: "annotation_df"
         # load images
         img_df = process_imgs(img_path_format, n_processes=n_processes)
         # load schema
         self.labels = parse_schema(schema_path)
-        # Initialise annotation table
+        # Initialise annotation table
         annotation_df = create_annot_table(img_df, self.labels)
         # sort annotation df by ID, then time
         annotation_df = annotation_df.sort_values(by=["id", "time"])
-        self.annotation_df =  annotation_df.reset_index(drop=True) # reset index to be 0, 1, 2, ...
+        self.annotation_df = annotation_df.reset_index(
+            drop=True
+        )  # reset index to be 0, 1, 2, ...
 
         # =============== Initialise view
-        self.init_schema_frame() # populates the schema frame with labels
-        self.display_images() # displays the initial images in the image frame
-
+        self.init_schema_frame()  # populates the schema frame with labels
+        self.display_images()  # displays the initial images in the image frame
 
     def init_schema_frame(self):
         """
@@ -58,58 +61,64 @@ class Model:
         """
         # add label at the top saying "Annotations:"
         ttk.Label(self.view.schema_frame, text="Annotations:").grid(column=0, row=0)
-        # add frame to save labels
+        # add frame to save labels
         label_frame = ttk.Frame(self.view.schema_frame)
         label_frame.grid(column=0, row=1)
         for i, label in enumerate(self.labels):
             ttk.Label(label_frame, text=label).grid(column=0, row=i)
         # add scrollbar if length of annotations exceeds the height of the screen
         # TODO
-    
+
     # =============== Changing rows
 
     def next_row(self):
         """
         Move to next row to annotate.
-        Checks that we do not go beyond end of the dataframe, 
+        Checks that we do not go beyond end of the dataframe,
         and that all images belong to the same participant.
         """
         # Check that we are not at the end of the dataframe
         if self.row == len(self.annotation_df) - self.images_to_right - 1:
             return False
 
-        for next_row in range(self.row+1, len(self.annotation_df) - self.images_to_right):
+        for next_row in range(
+            self.row + 1, len(self.annotation_df) - self.images_to_right
+        ):
             if self._check_row_ids(next_row):
                 self.row = next_row
-                # update View to display next set of images
+                # update View to display next set of images
                 return True
-        
-        return False
 
+        return False
 
     def prev_row(self):
         """
         Move to previous row to annotate.
-        Checks that we do not go beyond beginning of the dataframe, 
+        Checks that we do not go beyond beginning of the dataframe,
         and that all images belong to the same participant.
         """
         # Check that we are not at the beginning of the dataframe
         if self.row == self.image_index:
             return False
 
-        for prev_row in range(self.row-1, self.image_index - 1, -1):
+        for prev_row in range(self.row - 1, self.image_index - 1, -1):
             if self._check_row_ids(prev_row):
                 self.row = prev_row
-                # update View to display next set of images
+                # update View to display next set of images
                 return True
-        
+
         return False
-    
+
     def _check_row_ids(self, row):
         """
         Checks that the IDs in range [row - self.image_index, row + self.images_to_right] are the same.
         """
-        if not self.annotation_df.loc[row - self.image_index:row + self.images_to_right, "id"].nunique() == 1:
+        if (
+            not self.annotation_df.loc[
+                row - self.image_index : row + self.images_to_right, "id"
+            ].nunique()
+            == 1
+        ):
             return False
 
         return True
@@ -124,43 +133,40 @@ class Model:
         """
         if self.row + self.images_to_right >= len(self.annotation_df):
             return False
-        
+
         # clear the image frame
         for widget in self.view.image_frame.winfo_children():
             widget.destroy()
 
-
-        self.images_on_screen = [] # need pointers to current images on display, otherwise they get garbage collected
-        # add self.n_display_images frames to the view.image_frame
+        self.images_on_screen = (
+            []
+        )  # need pointers to current images on display, otherwise they get garbage collected
+        # add self.n_display_images frames to the view.image_frame
         for i in range(self.n_display_images):
             img_index = self.row - self.image_index + i
-            # add frame
+            # add frame
             image_box = ttk.Frame(self.view.image_frame, padding=ELEMENT_PAD)
             if i == self.image_index:
                 image_box.config(borderwidth=BORDER_WIDTH, relief="solid")
             image_box.grid(column=i, row=0)
 
-            # read image and timestamp from dataframe 
+            # read image and timestamp from dataframe
             image = Image.open(self.annotation_df.loc[img_index, "path"])
             image = image.rotate(self.rotate_image, expand=True)
             image = self.resize_image(image)
             img = ImageTk.PhotoImage(image)
             self.images_on_screen.append(img)
-            
+
             timestamp = self.annotation_df.loc[img_index, "time"]
             # format timestamp to display day and time as day, %d day %Hh%M:%S
             timestamp = timestamp.strftime("Day %d, %Hh%M:%S")
-            
 
             # add label with timestamp above image, centered
             ttk.Label(image_box, text=timestamp).grid(column=0, row=0)
 
-        
             ttk.Label(image_box, image=self.images_on_screen[-1]).grid(column=0, row=1)
 
-
         return True
-    
 
     def resize_image(self, image):
         """
@@ -176,11 +182,14 @@ class Model:
         max_height = ideal_image_frame_height
         # calculate size of each image
         resize_ratio = min(max_width / image.width, max_height / image.height)
-        image = image.resize((int(image.width * resize_ratio), int(image.height * resize_ratio)), Image.ANTIALIAS)
+        image = image.resize(
+            (int(image.width * resize_ratio), int(image.height * resize_ratio)),
+            Image.ANTIALIAS,
+        )
 
         return image
 
-    # ============== Adding and removing annotations
+    # ============== Adding and removing annotations
 
     def add_annotation(self, label, confidence):
         if label not in self.labels:
@@ -192,8 +201,8 @@ class Model:
         except ValueError:
             return False
         self.annotation_df.loc[self.row, label] = confidence
-        return True # now controller must update view with label buttons
-    
+        return True  # now controller must update view with label buttons
+
     def remove_annotation(self, label):
         if label not in self.labels:
             return False
@@ -210,17 +219,15 @@ class Model:
         labels = non_zero.index.tolist()
         return labels, confidences
 
-
     def save_annotations(self) -> bool:
         return save_annot_table(self.annotation_df, self.save_path)
 
-    # TODO, understand under which circumstances reloading is needed
+    # TODO, understand under which circumstances reloading is needed
 
-    
-    # ================= Comment getters and setters
+    # ================= Comment getters and setters
     def get_comment(self) -> str:
         return self.annotation_df.loc[self.row, "comment"]
-    
+
     def set_comment(self, comment: str) -> bool:
         self.annotation_df.loc[self.row, "comment"] = comment
         return True

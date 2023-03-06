@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def create_annot_table(img_df: pd.DataFrame, labels: list[str]):
     """
     Initialises a table to store the annotations. This table is of the form:
@@ -15,12 +16,14 @@ def create_annot_table(img_df: pd.DataFrame, labels: list[str]):
         annot_df[label] = 0.0
     return annot_df
 
+
 def save_annot_table(annot_df: pd.DataFrame, filepath: str):
     """
     Saves the annotation table as a csv file.
     """
     annot_df.to_csv(filepath, index=False)
     return True
+
 
 def load_annot_table(filepath: str) -> pd.DataFrame:
     """

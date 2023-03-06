@@ -1,15 +1,17 @@
 from pathlib import Path
 from tkinter import *
 from tkinter import ttk
+
 from PIL import Image, ImageTk
 
-from cameragui.view import View
-from cameragui.model import Model
 from cameragui.controller import Controller
+from cameragui.model import Model
+from cameragui.view import View
+
 
 def main():
     # Set up:
-    # Ask user for: 
+    # Ask user for:
     # - path to image folders
     # - path to annotation schema
     # - path to save annotation table
@@ -24,19 +26,19 @@ def main():
     save_path = str(project_root / "example_data/example_annotion.csv")
 
     n_display_images = 3
-    image_index = 1 # annotate the second image (zero-indexed)
-    n_processes = 4 
+    image_index = 1  # annotate the second image (zero-indexed)
+    n_processes = 4
 
     # GUI setup
     root = Tk()
     root.title("Camera logger annotation tool")
     view = View(root)
     model = Model(
-        img_path_format, 
+        img_path_format,
         n_display_images,
-        image_index, 
-        schema_path, 
-        save_path, 
+        image_index,
+        schema_path,
+        save_path,
         view,
         n_processes,
     )
@@ -44,7 +46,6 @@ def main():
 
     # lastly, start the GUI
     root.mainloop()
-
 
 
 if __name__ == "__main__":

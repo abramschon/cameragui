@@ -1,9 +1,11 @@
 import re
 from datetime import datetime
-import pytz
-from glob import glob 
+from glob import glob
 from multiprocessing import Pool
+
 import pandas as pd
+import pytz
+
 
 def process_imgs(img_path_format: str, n_processes: int = 3) -> pd.DataFrame:
     """
@@ -19,6 +21,7 @@ def process_imgs(img_path_format: str, n_processes: int = 3) -> pd.DataFrame:
 
     img_df = pd.DataFrame(img_infos, columns=["time", "id", "path"])
     return img_df
+
 
 def extract_img_info(filepath):
     parts = filepath.split("/")
