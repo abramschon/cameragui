@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from glob import glob
 from multiprocessing import Pool
+from pathlib import Path
 
 import pandas as pd
 import pytz
@@ -24,7 +25,7 @@ def process_imgs(img_path_format: str, n_processes: int = 3) -> pd.DataFrame:
 
 
 def extract_img_info(filepath):
-    parts = filepath.split("/")
+    parts = Path(filepath).parts
     # part ID
     part_id = int(parts[-2][1:])  # e.g. P123
 
